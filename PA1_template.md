@@ -8,11 +8,19 @@ output:
 
 ## Loading and preprocessing the data  
 
-```{r loadData, echo=TRUE}
+
+```r
 require(utils)
 ## For this project assume the working directory is set to where this file resides and should not be changed.
 ## The local repo directory is C:\Courses\repos\DataScience\RepData_PeerAssessment1
 getwd()
+```
+
+```
+## [1] "C:/Courses/Data Science/Reproducible Research/Project1"
+```
+
+```r
 ## NOTE: The GitHub repository also contains the dataset for the assignment so 
 ## you do not have to download the data separately.
 ## Unzip the file and set the datafile variable to the name of the extracted file.
@@ -24,6 +32,13 @@ unzip(zipfile,exdir = ".")
 ## Load the specified file into a data frame and prepare it for use.
 df <- read.csv(datafile,colClasses=c("integer","Date","integer"))
 str(df)
+```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Date, format: "2012-10-01" "2012-10-01" ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 ```
 
 ## What is mean total number of steps taken per day?
@@ -43,7 +58,8 @@ NAs will return a value of NA.
 the days with NAs are ignored.
 
 #### 1. Make a histogram of the total number of steps taken each day
-```{r histSteps, echo=TRUE}
+
+```r
 require(graphics)
 ## df was created in chunk loaddata.
 totals <- as.vector(by(df$steps,df$date,sum))
@@ -54,12 +70,26 @@ hist(totals, breaks=10,
      )
 ```
 
+![plot of chunk histSteps](figure/histSteps-1.png) 
+
 #### 2. Calculate and report the mean and median total number of steps taken per day
-```{r meanSteps, echo=TRUE}
+
+```r
 require(stats)
 ## totals was crated in chunk histSteps.
 print(paste("Mean Total Steps: ",round(mean(totals,na.rm=TRUE))))
+```
+
+```
+## [1] "Mean Total Steps:  10766"
+```
+
+```r
 print(paste("Median Total Steps: ",median(totals,na.rm=TRUE)))
+```
+
+```
+## [1] "Median Total Steps:  10765"
 ```
 
 ## What is the average daily activity pattern?
@@ -79,7 +109,8 @@ is the form used in the sample provided in the Peer Assessment instructions.
 Therefore interval will be used unmodified as it was in the example. This 
 makes the transitions between hours somewhat visible in the line graph.
 
-```{r plotactivity, echo=TRUE}
+
+```r
 require(graphics)
 ## df was created in chunk loaddata.
 NoNAs <- df[!is.na(df$steps),]
@@ -93,14 +124,21 @@ plot(names(avgact),avgact, type="l",
      )
 ```
 
+![plot of chunk plotactivity](figure/plotactivity-1.png) 
+
 #### 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r maxinterval, echo=TRUE}
+
+```r
 ## intervals and avgact were created in chunk plotactivity.
 avgact2 <- sapply(intervals, function(x) colMeans(x["steps"]))
 avgact2 <- data.frame(avgact2)
 maxint <- avgact[which.max(avgact2$avgact2)]
 print(paste("The interval with maximum average steps of",as.integer(maxint[1]),"is",names(maxint)))
+```
+
+```
+## [1] "The interval with maximum average steps of 206 is 835"
 ```
 
 ## Imputing missing values
@@ -109,11 +147,16 @@ print(paste("The interval with maximum average steps of",as.integer(maxint[1]),"
 
 It has already been determined that there were no missing values for interval or date columns.
 Therefore all NAs are for the steps variable.
-```{r countmissing, echo=TRUE}
+
+```r
 require(stats)
 ## df was created in chunk loaddata.
 df$ok <- complete.cases(df)
 print(paste("The total number of rows with NAs is ",sum(!df$ok)))
+```
+
+```
+## [1] "The total number of rows with NAs is  2304"
 ```
 
 #### 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
@@ -122,7 +165,8 @@ First, what do we know about the distribution of NAs by interval or date?
 The following plots and explanations are the basis for the decision that 
 the strategy will be to replace missing values with the interval average.
 
-```{r NAstrategy, echo=TRUE}
+
+```r
 require(stats)
 require(graphics)
 ## df was updated to include df$ok in chunk countmissing.
@@ -138,7 +182,11 @@ plot(names(naint),naint, type="l",
      xlab="Interval",
      ylab="Missing Data Count (NAs)"
      )
+```
 
+![plot of chunk NAstrategy](figure/NAstrategy-1.png) 
+
+```r
 ## Next look at missing values per date.
 ## This plot shows all dates with NAs are missing 288 values.
 nabydate <- split(df[,c("date","nok")], df$date)
@@ -148,7 +196,11 @@ plot(as.POSIXlt(names(nadate),"%Y-%m-%d", tz = "GMT"),nadate, type="l",
      xlab="Date",
      ylab="Missing Data Count (NAs)"
      )
+```
 
+![plot of chunk NAstrategy](figure/NAstrategy-2.png) 
+
+```r
 ## Next look at non-missing values per date.
 ## This plot shows that some dates have no non-NA values. Using
 ## the average for the date isn't useful since it will be 0 or NA
@@ -161,6 +213,8 @@ plot(as.POSIXlt(names(okdate),"%Y-%m-%d", tz = "GMT"),okdate, type="l",
      ylab="Non-Missing Data Count (non-NAs)"
      )
 ```
+
+![plot of chunk NAstrategy](figure/NAstrategy-3.png) 
 
 #### 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
@@ -177,7 +231,8 @@ the array created in 2 (average steps per interval).
 
 4. Use apply to add the newsteps column with the new steps values.
 
-```{r newdataset, echo=TRUE}
+
+```r
 ## Start with the dataset df updated by chunk NAstrategy.
 ## 1. Duplicate df data set to create data set with replacement values.
 newdf <- df
@@ -201,11 +256,17 @@ newdf$steps <- as.integer(apply(newdf,1,useavg,intavg))
 summary(newdf$steps)
 ```
 
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    0.00    0.00    0.00   37.33   27.00  806.00
+```
+
 #### 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. 
 
 First recreate the histogram using the new dataset.
 
-```{r newhistSteps, echo=TRUE}
+
+```r
 require(graphics)
 ## newdf was created in chunk newdataset.
 newtotals <- as.vector(by(newdf$steps,newdf$date,sum))
@@ -216,13 +277,27 @@ hist(newtotals, breaks=10,
      )
 ```
 
+![plot of chunk newhistSteps](figure/newhistSteps-1.png) 
+
 Recalculate and report the mean and median total number of steps taken per day.
 
-```{r newmeanSteps, echo=TRUE}
+
+```r
 require(stats)
 ## newtotals was crated in chunk newhistSteps.
 print(paste("Revised Mean Total Steps: ",round(mean(newtotals,na.rm=TRUE))))
+```
+
+```
+## [1] "Revised Mean Total Steps:  10750"
+```
+
+```r
 print(paste("Revised Median Total Steps: ",median(newtotals,na.rm=TRUE)))
+```
+
+```
+## [1] "Revised Median Total Steps:  10641"
 ```
 
 #### Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
@@ -244,7 +319,8 @@ For this part the weekdays() function may be of some help here. Use the dataset 
 
 #### 1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 
-```{r weekdayfactor, echo=TRUE}
+
+```r
 ## newdf dataset was created in chunk newdataset.
 ## Add the weekend/weekday factor variable.
 newdf$wkendwkday <- as.factor(
@@ -257,7 +333,8 @@ newdf$wkendwkday <- as.factor(
 
 #### 2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
 
-```{r panelplot, echo=TRUE}
+
+```r
 ## Depends on the version of newdf dataset updated in chunk weekdayfactor.
 require(graphics)
 wkdays <- newdf[newdf$wkendwkday=="weekday",]
@@ -279,7 +356,8 @@ plot(names(wkdayavgact),wkdayavgact, type="l",
      xlab="5 Minute Interval",
      ylab="Average Number of Steps"
      )
-
 ```
+
+![plot of chunk panelplot](figure/panelplot-1.png) 
 
 The panel plot shows that on weekdays the time of day with the highest activity is between 8:00 AM and 9:00 AM since it seems people are more likely to be exercising before work.  There is somewhat higher activity again after 3:30 PM.  Weekends still have the highest activity between 8:00 AM and 9:30 AM, but the peak is lower than for weekdays and there is higher activity throughout weekend days when compared to weekdays.
